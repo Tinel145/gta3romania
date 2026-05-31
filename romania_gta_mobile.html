@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+<title>România Criminal — GTA Mobile</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Courier New',monospace}
+#gc{position:relative;width:100vw;height:100vh;overflow:hidden;background:#1a1a1a;cursor:none}
+canvas{display:block;image-rendering:pixelated}
+#hud{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none}
+
+/* TOP BAR */
+#topbar{position:absolute;top:0;left:0;right:0;height:38px;background:linear-gradient(180deg,rgba(0,0,0,0.85) 0%,transparent 100%);display:flex;align-items:center;justify-content:space-between;padding:0 10px;pointer-events:none}
+#money{color:#00ff88;font-size:15px;font-weight:bold;text-shadow:0 0 8px rgba(0,255,136,0.5)}
+#rep-bar{color:#aaa;font-size:9px}
+#wp-bar{display:flex;gap:3px;align-items:center}
+.wstar{font-size:15px;color:#333}.wstar.on{color:#FFD700}
+
+/* BOTTOM BAR */
+#botbar{position:absolute;bottom:0;left:0;right:0;height:34px;background:linear-gradient(0deg,rgba(0,0,0,0.85) 0%,transparent 100%);display:flex;align-items:center;justify-content:space-between;padding:0 10px;pointer-events:none}
+#bars{display:flex;gap:10px;align-items:center}
+.bl{color:#ccc;font-size:8px;margin-right:3px}
+.bw{width:80px;height:6px;background:#333;border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle}
+.bf{height:100%;border-radius:3px;transition:width 0.2s}
+#whud{display:flex;gap:3px}
+.ws{padding:2px 5px;border-radius:3px;border:1px solid #444;color:#666;font-size:8px}
+.ws.on{border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.1)}
+
+/* NOTIFICATIONS */
+#notif{position:absolute;top:44px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.92);color:#FFD700;padding:7px 16px;border-radius:7px;font-size:12px;font-weight:bold;text-align:center;opacity:0;transition:opacity 0.3s;pointer-events:none;border:1px solid rgba(255,215,0,0.4);max-width:280px;white-space:nowrap;z-index:20}
+#mhud{position:absolute;top:44px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:5px 12px;border-radius:5px;font-size:10px;text-align:center;border-left:3px solid #FFD700;display:none;max-width:220px;white-space:nowrap}
+#kf{position:absolute;top:10px;right:10px;text-align:right;font-size:9px;color:#ff6666;line-height:1.8;pointer-events:none}
+#interior-overlay{position:absolute;top:42px;left:50%;transform:translateX(-50%);background:rgba(20,10,5,0.85);color:#FFD700;padding:2px 10px;border-radius:4px;font-size:9px;display:none;pointer-events:none;white-space:nowrap}
+#crosshair-info{position:absolute;pointer-events:none;color:#fff;font-size:8px;background:rgba(0,0,0,0.7);padding:2px 6px;border-radius:3px;display:none}
+#mm{position:absolute;bottom:38px;right:10px;width:72px;height:72px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.2)}
+
+/* TOUCH CONTROLS */
+#touch-controls{position:absolute;bottom:38px;left:0;right:0;pointer-events:none;height:calc(100% - 76px)}
+
+/* Left joystick */
+#joystick-zone{position:absolute;bottom:10px;left:10px;width:130px;height:130px;pointer-events:auto}
+#joystick-base{position:absolute;bottom:0;left:0;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2)}
+#joystick-knob{position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.3);border:2px solid rgba(255,255,255,0.5);top:33px;left:33px;transition:none}
+
+/* Right action buttons */
+#btns-right{position:absolute;bottom:10px;right:90px;width:160px;height:130px;pointer-events:auto}
+.abtn{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;color:#fff;pointer-events:auto;user-select:none;border:2px solid rgba(255,255,255,0.3);background:rgba(0,0,0,0.5);transition:background 0.1s}
+.abtn:active{background:rgba(255,255,255,0.2)}
+#btn-shoot{width:52px;height:52px;right:0;bottom:38px;background:rgba(220,30,30,0.6);border-color:#ff4444;font-size:18px}
+#btn-enter{width:44px;height:44px;right:58px;bottom:0;background:rgba(0,180,100,0.5);border-color:#00ff88;font-size:10px;text-align:center;line-height:1.2}
+#btn-action{width:44px;height:44px;right:0;bottom:0;background:rgba(255,200,0,0.5);border-color:#FFD700;font-size:10px;text-align:center;line-height:1.2}
+#btn-car{width:44px;height:44px;right:58px;bottom:52px;background:rgba(50,100,200,0.5);border-color:#6699ff;font-size:10px;text-align:center;line-height:1.2}
+#btn-dodge{width:40px;height:40px;right:108px;bottom:40px;background:rgba(100,200,255,0.4);border-color:#88ccff;font-size:10px}
+
+/* Top weapon buttons */
+#btns-weapons{position:absolute;top:42px;left:50%;transform:translateX(-50%);display:flex;gap:5px;pointer-events:auto}
+.wbtn{width:36px;height:28px;border-radius:5px;border:1px solid #444;color:#666;font-size:8px;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2}
+.wbtn.on{border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.12)}
+
+/* Dialog */
+#dlg{position:absolute;bottom:38px;left:50%;transform:translateX(-50%);width:90vw;max-width:380px;background:rgba(0,0,0,0.95);border:1px solid #FFD700;border-radius:8px;padding:10px 12px;color:#fff;font-size:11px;line-height:1.5;display:none;pointer-events:auto;z-index:30}
+#dlg-name{color:#FFD700;font-weight:bold;font-size:12px;margin-bottom:4px}
+#dlg-btns{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.dbtn{background:#FFD700;color:#000;border:none;padding:5px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-family:monospace;pointer-events:auto}
+.dbtn:active{background:#ffee44}
+
+/* Level up */
+#lvup{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;flex-direction:column;color:#FFD700;pointer-events:none;z-index:40}
+#lvup h2{font-size:24px;letter-spacing:3px}
+#lvup p{font-size:12px;color:#fff;margin-top:7px}
+
+/* Zone rep */
+#rzones{position:absolute;bottom:38px;right:86px;font-size:8px;color:#777;text-align:right;line-height:1.9;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="gc">
+<canvas id="gc2"></canvas>
+<div id="hud">
+  <div id="topbar">
+    <div id="money">$0</div>
+    <div id="rep-bar">REP: Nimeni</div>
+    <div id="wp-bar">
+      <span style="color:#aaa;font-size:8px;margin-right:2px">⚠</span>
+      <span class="wstar" id="s1">★</span><span class="wstar" id="s2">★</span><span class="wstar" id="s3">★</span><span class="wstar" id="s4">★</span><span class="wstar" id="s5">★</span>
+    </div>
+  </div>
+  <div id="kf"></div>
+  <div id="mhud"></div>
+  <div id="interior-overlay">INTERIOR | ENTER=Ieși</div>
+  <div id="notif"></div>
+  <div id="crosshair-info"></div>
+  <div id="mm"><canvas id="mmc" width="72" height="72"></canvas></div>
+  <div id="rzones"><div id="rz1">Ferentari: —</div><div id="rz2">Centru: —</div><div id="rz3">Titan: —</div></div>
+  <div id="botbar">
+    <div id="bars">
+      <span class="bl">HP</span><div class="bw"><div class="bf" id="hpf" style="width:100%;background:#e74c3c"></div></div>
+      <span class="bl" style="margin-left:6px">ARM</span><div class="bw"><div class="bf" id="arf" style="width:0%;background:#3498db"></div></div>
+    </div>
+    <div id="whud">
+      <div class="ws on" id="ws0">✊</div>
+      <div class="ws" id="ws1">🏏</div>
+      <div class="ws" id="ws2">🔫</div>
+      <div class="ws" id="ws3">⚡</div>
+      <div class="ws" id="ws4">💣</div>
+    </div>
+  </div>
+
+  <!-- Touch controls -->
+  <div id="touch-controls">
+    <div id="joystick-zone">
+      <div id="joystick-base">
+        <div id="joystick-knob"></div>
+      </div>
+    </div>
+    <div id="btns-right">
+      <div class="abtn" id="btn-shoot">🎯</div>
+      <div class="abtn" id="btn-enter">🚪<br>ENTER</div>
+      <div class="abtn" id="btn-action">⭐<br>ACT</div>
+      <div class="abtn" id="btn-car">🚗<br>CAR</div>
+      <div class="abtn" id="btn-dodge">💨</div>
+    </div>
+    <div id="btns-weapons">
+      <div class="wbtn on" id="wb0">✊<br>PUMNI</div>
+      <div class="wbtn" id="wb1">🏏<br>BATA</div>
+      <div class="wbtn" id="wb2">🔫<br>9MM</div>
+      <div class="wbtn" id="wb3">⚡<br>AK47</div>
+      <div class="wbtn" id="wb4">💣<br>GREN</div>
+    </div>
+  </div>
+
+  <div id="dlg"><div id="dlg-name"></div><div id="dlg-text"></div><div id="dlg-btns"></div></div>
+</div>
+<div id="lvup"><h2>LEVEL UP!</h2><p id="lu-txt"></p></div>
+</div>
+
+<script>
+// ── CANVAS SETUP ──────────────────────────────────────────────────────────────
+const cv = document.getElementById('gc2');
+const cx = cv.getContext('2d');
+const mc = document.getElementById('mmc');
+const mx = mc.getContext('2d');
+
+function resize() {
+  cv.width = window.innerWidth;
+  cv.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', () => { resize(); });
+
+const W = () => cv.width;
+const H = () => cv.height;
+const MW = 2800, MH = 2400;
+
+let cam = { x: 0, y: 0 };
+let gameTime = 0;
+
+// ── GAME STATE ────────────────────────────────────────────────────────────────
+let money = 0, hp = 100, armor = 0, wanted = 0, xp = 0, level = 1;
+let activeWeapon = 0, ammo = [999, 30, 24, 90, 3], maxAmmo = [999, 30, 24, 90, 3];
+let activeMission = null, missionTimer = 0, missionTarget = null;
+let particles = [], bullets = [], explosions = [], killfeed = [];
+let dialogActive = false;
+let policeTimer = 0, wantedDecay = 0;
+let zoneRep = { ferentari: 0, centru: 0, titan: 0 };
+let ntTimeout;
+let combo = 0, comboT = 0;
+let weaponCd = 0;
+let inInterior = false, currentInterior = null;
+let crosshairTarget = null;
+
+// ── TOUCH / INPUT STATE ───────────────────────────────────────────────────────
+let joystick = { active: false, id: null, cx: 0, cy: 0, dx: 0, dy: 0 };
+let aimTouch = { active: false, id: null, x: 0, y: 0, startX: 0, startY: 0 };
+let touchShoot = false;
+let virtualKeys = { shoot: false };
+let lastAimX = 0, lastAimY = 0;
+
+// ── WEAPONS ───────────────────────────────────────────────────────────────────
+const WEAPONS = [
+  { name: 'PUMNI', range: 32, dmg: 15, rate: 30, proj: false, col: '#ffaa00' },
+  { name: 'BATA', range: 48, dmg: 32, rate: 24, proj: false, col: '#8B4513' },
+  { name: 'PISTOL', range: 260, dmg: 26, rate: 14, proj: true, spd: 13, col: '#bbb' },
+  { name: 'AK47', range: 360, dmg: 19, rate: 5, proj: true, spd: 17, col: '#c0392b' },
+  { name: 'GREN', range: 65, dmg: 85, rate: 60, proj: true, spd: 6, col: '#27ae60', expl: true }
+];
+
+// ── MAP DATA ──────────────────────────────────────────────────────────────────
+const roads = [
+  { x: 0, y: 480, w: MW, h: 70, n: 'Bd. Unirii' },
+  { x: 0, y: 1050, w: MW, h: 70, n: 'Șos. Pantelimon' },
+  { x: 0, y: 1700, w: MW, h: 70, n: 'Calea Văcărești' },
+  { x: 0, y: 2200, w: MW, h: 70, n: 'Bd. Metalurgiei' },
+  { x: 300, y: 0, w: 70, h: MH, n: 'Str. Traian' },
+  { x: 800, y: 0, w: 70, h: MH, n: 'Bd. Carol I' },
+  { x: 1300, y: 0, w: 70, h: MH, n: 'Calea Moșilor' },
+  { x: 1800, y: 0, w: 70, h: MH, n: 'Bd. Decebal' },
+  { x: 2300, y: 0, w: 70, h: MH, n: 'Calea Griviței' }
+];
+
+const bldgs = [
+  { x: 70, y: 70, w: 200, h: 380, c: '#5a4a35', n: 'Bloc ANL', ek: 'bloc_anl' },
+  { x: 380, y: 70, w: 390, h: 260, c: '#6a5a45', n: 'Primăria', ek: 'primaria' },
+  { x: 880, y: 70, w: 380, h: 260, c: '#7a6a55', n: 'Piața Obor', ek: 'piata_obor' },
+  { x: 1380, y: 70, w: 380, h: 260, c: '#6a5a45', n: 'Hotel Intl', ek: 'hotel' },
+  { x: 1880, y: 70, w: 380, h: 260, c: '#7a6a55', n: 'Bancă BCR', ek: 'banca' },
+  { x: 2380, y: 70, w: 380, h: 260, c: '#5a4a35', n: 'Complex', ek: 'complex' },
+  { x: 70, y: 560, w: 200, h: 460, c: '#4a3a25', n: 'Bloc Turn', ek: 'bloc_turn' },
+  { x: 380, y: 560, w: 380, h: 460, c: '#6a5a45', n: 'Spital', ek: 'spital' },
+  { x: 880, y: 560, w: 380, h: 460, c: '#8a7a65', n: 'Centrul Civic', ek: 'centru_civic' },
+  { x: 1380, y: 560, w: 380, h: 460, c: '#5a4a35', n: 'Palat Parl.', ek: 'palat' },
+  { x: 1880, y: 560, w: 380, h: 460, c: '#6a5a45', n: 'Piața Victoriei', ek: 'piata_vic' },
+  { x: 2380, y: 560, w: 380, h: 460, c: '#7a6a55', n: 'Poliția', isPolitie: true, ek: 'politie' },
+  { x: 70, y: 1130, w: 200, h: 540, c: '#4a3a25', n: 'Depou', ek: 'depou' },
+  { x: 380, y: 1130, w: 380, h: 540, c: '#6a5a45', n: 'Fabrică', ek: 'fabrica' },
+  { x: 880, y: 1130, w: 380, h: 540, c: '#7a6a55', n: 'Hale Industria', ek: 'hale' },
+  { x: 1380, y: 1130, w: 380, h: 540, c: '#5a4a35', n: 'Uzina', ek: 'uzina' },
+  { x: 1880, y: 1130, w: 380, h: 540, c: '#6a5a45', n: 'Depozit', ek: 'depozit' },
+  { x: 2380, y: 1130, w: 380, h: 540, c: '#7a6a55', n: 'Terminal', ek: 'terminal' },
+  { x: 70, y: 1780, w: 200, h: 380, c: '#4a3a25', n: 'Bloc Comunist', ek: 'bloc_com' },
+  { x: 380, y: 1780, w: 380, h: 380, c: '#5a4a35', n: 'Bloc Ferentari', ek: 'bloc_fer' },
+  { x: 880, y: 1780, w: 380, h: 380, c: '#6a5a45', n: 'Bloc Titan', ek: 'bloc_titan' },
+  { x: 1380, y: 1780, w: 380, h: 380, c: '#7a6a55', n: 'Mall', ek: 'mall' },
+  { x: 1880, y: 1780, w: 380, h: 380, c: '#5a4a35', n: 'Parc Ind.', ek: 'parc_ind' },
+  { x: 2380, y: 1780, w: 380, h: 380, c: '#6a5a45', n: 'Gară Nord', ek: 'gara' }
+];
+
+// ── INTERIORS ─────────────────────────────────────────────────────────────────
+const INTERIORS = {
+  primaria: { name: 'Primăria Sector 4', w: 500, h: 400, color: '#c8b89a', npcs: [{ x: 200, y: 180, name: 'Secretara Gabi', color: '#e8a0b0', dialog: 'Bună ziua! Aveți programare?', loot: 100, hostile: false }, { x: 360, y: 280, name: 'Funcționar Mircea', color: '#7a9ab8', dialog: 'Nu tulburați ordinea!', loot: 200, hostile: false }], furniture: [{ x: 60, y: 60, w: 120, h: 40, c: '#6a5a45', n: 'Birou' }, { x: 250, y: 60, w: 120, h: 40, c: '#6a5a45', n: 'Birou' }, { x: 300, y: 180, w: 100, h: 50, c: '#7a6a55', n: 'Recepție' }], pickups: [{ x: 420, y: 80, t: 'money', v: 500 }, { x: 150, y: 340, t: 'armor' }] },
+  banca: { name: 'Bancă BCR - Interior', w: 500, h: 400, color: '#d4c4a8', npcs: [{ x: 180, y: 150, name: 'Casier Andrei', color: '#8ab0c8', dialog: 'Ce doriți?', loot: 800, hostile: false }, { x: 320, y: 150, name: 'Casier Maria', color: '#c8a8b0', dialog: 'Aveți cont?', loot: 800, hostile: false }, { x: 60, y: 200, name: 'Paznic BCR', color: '#334488', dialog: 'STAI!', loot: 100, hostile: true }, { x: 440, y: 200, name: 'Paznic 2', color: '#334488', dialog: 'ALARMA!', loot: 100, hostile: true }], furniture: [{ x: 40, y: 60, w: 180, h: 50, c: '#5a4a35', n: 'Ghișee' }, { x: 260, y: 60, w: 180, h: 50, c: '#5a4a35', n: 'Ghișee' }, { x: 20, y: 200, w: 60, h: 150, c: '#4a3a25', n: 'Seif' }, { x: 400, y: 200, w: 80, h: 150, c: '#4a3a25', n: 'Seif Mare' }], pickups: [{ x: 30, y: 220, t: 'money', v: 2000 }, { x: 410, y: 210, t: 'money', v: 3000 }] },
+  depozit: { name: 'Depozit - Interior', w: 500, h: 400, color: '#5a5040', npcs: [{ x: 150, y: 200, name: 'Paznic Costel', color: '#334488', dialog: 'STOP! Mâna sus!', hostile: true, loot: 150 }, { x: 350, y: 200, name: 'Paznic Ionel', color: '#334488', dialog: 'Chem poliția!', hostile: true, loot: 150 }], furniture: [{ x: 50, y: 50, w: 100, h: 60, c: '#6a5a35', n: 'Cutii' }, { x: 200, y: 50, w: 100, h: 60, c: '#6a5a35', n: 'Cutii' }, { x: 350, y: 50, w: 100, h: 60, c: '#6a5a35', n: 'Raft' }, { x: 300, y: 300, w: 150, h: 70, c: '#4a3a15', n: 'Marfă Ilegală' }], pickups: [{ x: 320, y: 310, t: 'money', v: 1500 }, { x: 80, y: 290, t: 'ammo', wep: 3 }, { x: 200, y: 120, t: 'weapon', wep: 3 }] },
+  spital: { name: 'Spital Urgență', w: 500, h: 400, color: '#e8f0e8', npcs: [{ x: 200, y: 150, name: 'Dr. Popescu', color: '#88bbcc', dialog: 'Aveți nevoie de ajutor?', heals: true, loot: 0, hostile: false }], furniture: [{ x: 40, y: 60, w: 100, h: 50, c: '#aaccbb', n: 'Pat' }, { x: 180, y: 60, w: 100, h: 50, c: '#aaccbb', n: 'Pat' }, { x: 320, y: 60, w: 100, h: 50, c: '#aaccbb', n: 'Pat' }], pickups: [{ x: 420, y: 50, t: 'health' }, { x: 420, y: 130, t: 'health' }, { x: 420, y: 210, t: 'armor' }] },
+  politie: { name: 'Secția 4 Poliție', w: 500, h: 400, color: '#aab4cc', npcs: [{ x: 200, y: 180, name: 'Ofițer Ștefan', color: '#223388', dialog: 'CE FACI AICI?! MÂNA SUS!', hostile: true, loot: 200 }, { x: 340, y: 280, name: 'Șef Secție Gh.', color: '#112266', dialog: 'REȚINEȚI INTRUSUL!', hostile: true, loot: 300 }], furniture: [{ x: 40, y: 60, w: 120, h: 50, c: '#334488', n: 'Birou Poliție' }, { x: 240, y: 60, w: 120, h: 50, c: '#334488', n: 'Birou' }, { x: 380, y: 200, w: 80, h: 150, c: '#223377', n: 'Celule' }], pickups: [{ x: 380, y: 50, t: 'armor' }, { x: 120, y: 300, t: 'ammo', wep: 2 }] },
+  mall: { name: 'Mall Ferentari', w: 500, h: 400, color: '#e8e0d0', npcs: [{ x: 150, y: 150, name: 'Vânzător Fănică', color: '#cc8833', dialog: 'Avem tot! Preț bun!', shop: true, loot: 0, hostile: false }, { x: 320, y: 280, name: 'Pază Mall', color: '#334455', dialog: 'Nu faceți scandal!', loot: 100, hostile: false }], furniture: [{ x: 40, y: 40, w: 80, h: 60, c: '#c8a870', n: 'Stand' }, { x: 160, y: 40, w: 80, h: 60, c: '#c8a870', n: 'Stand' }, { x: 280, y: 40, w: 80, h: 60, c: '#c8a870', n: 'Stand' }, { x: 380, y: 200, w: 100, h: 150, c: '#aa8850', n: 'Magazin' }], pickups: [{ x: 390, y: 210, t: 'weapon', wep: 2 }, { x: 390, y: 280, t: 'ammo', wep: 3 }] },
+  gara: { name: 'Gara de Nord', w: 500, h: 400, color: '#c8c0b0', npcs: [{ x: 180, y: 160, name: 'Șofer Tren Dan', color: '#884422', dialog: 'Plecăm în 5 minute!', loot: 50, hostile: false }, { x: 320, y: 200, name: 'Inspector CFR', color: '#445588', dialog: 'Bilet, vă rog!', loot: 80, hostile: false }], furniture: [{ x: 40, y: 60, w: 420, h: 30, c: '#887760', n: 'Peron 1' }, { x: 40, y: 180, w: 420, h: 30, c: '#887760', n: 'Peron 2' }, { x: 40, y: 300, w: 420, h: 30, c: '#887760', n: 'Peron 3' }], pickups: [{ x: 450, y: 80, t: 'money', v: 300 }] },
+  piata_obor: { name: 'Piața Obor', w: 500, h: 400, color: '#c4b890', npcs: [{ x: 150, y: 150, name: 'Negustor Vasile', color: '#cc8822', dialog: 'Cele mai bune mărfuri!', shop: true, loot: 200, hostile: false }, { x: 300, y: 200, name: 'Negustoreasă Ana', color: '#cc6688', dialog: 'Cumpărați!', loot: 150, hostile: false }], furniture: [{ x: 40, y: 40, w: 80, h: 50, c: '#aa8840', n: 'Tejghea' }, { x: 160, y: 40, w: 80, h: 50, c: '#aa8840', n: 'Tejghea' }, { x: 280, y: 40, w: 80, h: 50, c: '#aa8840', n: 'Tejghea' }], pickups: [{ x: 430, y: 60, t: 'money', v: 400 }, { x: 430, y: 150, t: 'health' }] }
+};
+['bloc_anl', 'hotel', 'complex', 'bloc_turn', 'centru_civic', 'palat', 'piata_vic', 'depou', 'fabrica', 'hale', 'uzina', 'terminal', 'bloc_com', 'bloc_fer', 'bloc_titan', 'parc_ind'].forEach(k => {
+  INTERIORS[k] = { name: k.replace(/_/g, ' ').toUpperCase(), w: 500, h: 400, color: '#6a5a4a', npcs: [{ x: 200, y: 200, name: 'Locatar', color: '#aa8866', dialog: 'Ce doriți?', loot: 50, hostile: false }], furniture: [{ x: 50, y: 50, w: 100, h: 50, c: '#5a4a35', n: 'Mobilă' }, { x: 300, y: 280, w: 80, h: 60, c: '#4a3a25', n: 'Obiect' }], pickups: [{ x: 400, y: 50, t: 'money', v: 100 }] };
+});
+
+let interiorState = {};
+Object.keys(INTERIORS).forEach(k => {
+  interiorState[k] = {
+    npcs: INTERIORS[k].npcs.map(n => ({ ...n, hp: n.hostile ? 60 : 40, maxHp: n.hostile ? 60 : 40, alive: true, shootCd: 0 })),
+    pickups: INTERIORS[k].pickups.map(p => ({ ...p, active: true }))
+  };
+});
+
+// ── STREET NPCs ───────────────────────────────────────────────────────────────
+const streetNpcs = [
+  { x: 450, y: 500, hp: 60, maxHp: 60, color: '#e67e22', name: 'Ion Maftei', faction: 'civili', alive: true, walkP: 0, pd: 1, sCd: 0, dialog: { greeting: 'Bună ziua! Aveți grijă...', missions: [{ text: 'Livrează coletul la Obor', type: 'delivery', tx: 900, ty: 300, reward: 600, time: 60, desc: 'Colet la Piața Obor', killsNeeded: 0 }, { text: 'Nu am treabă', type: null }] } },
+  { x: 900, y: 600, hp: 100, maxHp: 100, color: '#8e44ad', name: 'Gigi Contraband', faction: 'hoti', alive: true, walkP: 0, pd: 1, sCd: 0, dialog: { greeting: 'Hei! Am ceva pentru tine...', missions: [{ text: 'Jefuiește Banca BCR', type: 'rob_bank', tx: 1880, ty: 70, reward: 4000, time: 120, desc: 'Intră în bancă, ia banii din seif', killsNeeded: 2 }, { text: 'Atacă depozitul', type: 'assault', tx: 1880, ty: 1130, reward: 2000, time: 120, desc: 'Elimină paznicii depozitului', killsNeeded: 2 }, { text: 'Lasă-mă', type: null }] } },
+  { x: 1400, y: 1200, hp: 80, maxHp: 80, color: '#c0392b', name: 'Dorel Ferentari', faction: 'gasti', alive: true, walkP: 0, pd: 1, sCd: 0, dialog: { greeting: 'Ce cauți pe la noi?', missions: [{ text: 'Război cu Titan', type: 'gang_war', tx: 2100, ty: 1400, reward: 1800, time: 100, desc: 'Elimină 3 rivali Titan', killsNeeded: 3 }, { text: 'Nu mă bag', type: null }] } },
+  { x: 2100, y: 1400, hp: 80, maxHp: 80, color: '#16a085', name: 'Marius Titan', faction: 'rivali', alive: true, walkP: 0, pd: 1, sCd: 0, dialog: { greeting: 'Nu te-am mai văzut...', missions: [{ text: 'Lovește gașca Ferentari', type: 'gang_war', tx: 500, ty: 1800, reward: 1600, time: 110, desc: '3 eliminări în Ferentari', killsNeeded: 3 }, { text: 'Nimic de la mine', type: null }] } }
+];
+
+const playerCars = [
+  { x: 410, y: 500, ang: 0, c: '#cc2200', w: 34, h: 20, n: 'Dacia 1300', spd: 0, maxSpd: 5.5, acc: 0.18, fri: 0.91, hp: 100, inUse: false },
+  { x: 860, y: 500, ang: 0, c: '#003399', w: 34, h: 20, n: 'ARO 24', spd: 0, maxSpd: 5, acc: 0.14, fri: 0.90, hp: 100, inUse: false },
+  { x: 1360, y: 500, ang: 0, c: '#228833', w: 34, h: 20, n: 'Trabant', spd: 0, maxSpd: 4, acc: 0.11, fri: 0.88, hp: 100, inUse: false },
+  { x: 1860, y: 500, ang: 0, c: '#cc8800', w: 36, h: 22, n: 'Dacia Papuc', spd: 0, maxSpd: 4.5, acc: 0.13, fri: 0.89, hp: 100, inUse: false }
+];
+const trafficCars = [
+  { x: 200, y: 500, vx: 1.4, vy: 0, ang: 0, c: '#e74c3c', w: 32, h: 19, alive: true, hp: 40 },
+  { x: 900, y: 500, vx: -1.2, vy: 0, ang: Math.PI, c: '#3498db', w: 32, h: 19, alive: true, hp: 40 },
+  { x: 350, y: 1070, vx: 0, vy: 1.1, ang: Math.PI / 2, c: '#2ecc71', w: 19, h: 32, alive: true, hp: 40 },
+  { x: 1500, y: 500, vx: 1.6, vy: 0, ang: 0, c: '#f39c12', w: 32, h: 19, alive: true, hp: 40 },
+  { x: 1800, y: 1070, vx: 0, vy: -1.3, ang: -Math.PI / 2, c: '#9b59b6', w: 19, h: 32, alive: true, hp: 40 },
+  { x: 2400, y: 500, vx: -1.0, vy: 0, ang: Math.PI, c: '#1abc9c', w: 32, h: 19, alive: true, hp: 40 }
+];
+const policeCars = [];
+
+const streetPickups = [
+  { x: 700, y: 300, t: 'health', active: true }, { x: 1200, y: 700, t: 'armor', active: true },
+  { x: 1600, y: 1200, t: 'money', v: 300, active: true }, { x: 400, y: 1500, t: 'health', active: true },
+  { x: 2000, y: 500, t: 'ammo', wep: 2, active: true }, { x: 1000, y: 1500, t: 'ammo', wep: 3, active: true },
+  { x: 500, y: 400, t: 'weapon', wep: 1, active: true }, { x: 1100, y: 1100, t: 'weapon', wep: 2, active: true }
+];
+
+const player = { x: 420, y: 510, ang: 0, inCar: false, car: null, blinkT: 0, visible: true, exitX: 420, exitY: 510 };
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function solidB(nx, ny, hw, hh) {
+  for (const b of bldgs) {
+    if (b.iswater || b.ispark) continue;
+    if (nx + hw > b.x && nx - hw < b.x + b.w && ny + hh > b.y && ny - hh < b.y + b.h) return true;
+  }
+  return false;
+}
+function solidI(nx, ny, hw, hh) {
+  if (!currentInterior) return false;
+  const iw = currentInterior.w, ih = currentInterior.h;
+  if (nx - hw < 10 || nx + hw > iw - 10 || ny - hh < 10 || ny + hh > ih - 10) return true;
+  for (const f of currentInterior.furniture) {
+    if (nx + hw > f.x && nx - hw < f.x + f.w && ny + hh > f.y && ny - hh < f.y + f.h) return true;
+  }
+  return false;
+}
+function addPart(x, y, col, n, sz, sp = 3) {
+  for (let i = 0; i < n; i++) particles.push({ x, y, vx: (Math.random() - .5) * sp, vy: (Math.random() - .5) * sp, life: 1, col, sz: sz * (.5 + Math.random() * .7) });
+}
+function addBlood(x, y) { addPart(x, y, '#c0392b', 8, 3, 4); }
+function addExpl(x, y, r = 80) {
+  explosions.push({ x, y, r, life: 1 });
+  addPart(x, y, '#f39c12', 20, 5, 7); addPart(x, y, '#e74c3c', 14, 4, 6); addPart(x, y, '#fff', 6, 3, 5);
+  addKF('💥 EXPLOZIE!');
+  const targets = inInterior ? interiorState[currentInterior.ek || currentInterior.enterKey || ''].npcs : streetNpcs;
+  targets.forEach(n => { if (n.alive && Math.hypot(n.x - x, n.y - y) < r) hitNpc(n, WEAPONS[4].dmg); });
+  policeCars.forEach(pc => { if (Math.hypot(pc.x - x, pc.y - y) < r) { pc.hp -= 60; if (pc.hp <= 0) killPC(pc); } });
+  if (Math.hypot(player.x - x, player.y - y) < r * .7) takeDmg(30);
+  increaseW(2);
+}
+function killPC(pc) { addExpl(pc.x, pc.y, 70); policeCars.splice(policeCars.indexOf(pc), 1); gainMoney(400); nt('Mașina poliției distruse! +$400', 2000); }
+function nt(msg, dur = 2500) { const n = document.getElementById('notif'); n.textContent = msg; n.style.opacity = '1'; clearTimeout(ntTimeout); ntTimeout = setTimeout(() => n.style.opacity = '0', dur); }
+function addKF(msg) { killfeed.push({ msg, t: 180 }); document.getElementById('kf').innerHTML = killfeed.slice(-3).map(k => `<div style="opacity:${k.t / 180}">${k.msg}</div>`).join(''); }
+function increaseW(v) { wanted = Math.min(5, wanted + v); updateWUI(); }
+function updateWUI() { for (let i = 1; i <= 5; i++) document.getElementById('s' + i).classList.toggle('on', i <= wanted); }
+function gainMoney(v) { money += v; document.getElementById('money').textContent = '$' + money; xp += v / 10; checkLvl(); }
+function checkLvl() {
+  const need = level * 200;
+  if (xp >= need) {
+    xp -= need; level++;
+    const lu = document.getElementById('lvup');
+    const perks = ['Armură +25', 'Viteză +10%', 'Damage +20%', 'HP regen', 'Spawn departe'];
+    document.getElementById('lu-txt').textContent = 'NIVEL ' + level + ' — ' + (perks[Math.min(level - 2, perks.length - 1)] || 'Bonus general');
+    lu.style.display = 'flex'; setTimeout(() => lu.style.display = 'none', 2500);
+    gainRep(20, 'centru'); gainRep(15, 'ferentari'); gainRep(10, 'titan');
+  }
+}
+function takeDmg(v) {
+  if (player.blinkT > 0) return;
+  if (armor > 0) { const av = Math.min(armor, v * .7); armor -= av; v -= av; }
+  hp = Math.max(0, hp - v); player.blinkT = 40; updateBars();
+  if (hp <= 0) respawn();
+}
+function updateBars() {
+  const hf = document.getElementById('hpf');
+  hf.style.width = hp + '%';
+  hf.style.background = hp > 50 ? '#2ecc71' : hp > 25 ? '#f39c12' : '#e74c3c';
+  document.getElementById('arf').style.width = armor + '%';
+}
+function respawn() {
+  player.x = 420; player.y = 510;
+  if (player.car) { player.car.inUse = false; player.car = null; player.inCar = false; }
+  hp = 100; armor = 0; wanted = 0; policeCars.length = 0;
+  inInterior = false; currentInterior = null;
+  document.getElementById('interior-overlay').style.display = 'none';
+  const loss = Math.floor(money * .15); money = Math.max(0, money - loss);
+  document.getElementById('money').textContent = '$' + money;
+  updateBars(); updateWUI();
+  activeMission = null; missionTarget = null;
+  document.getElementById('mhud').style.display = 'none';
+  nt('Mort! Respawn spital. -$' + loss, 3000);
+}
+function gainRep(v, z) { zoneRep[z] = Math.min(100, zoneRep[z] + v); updateRepUI(); }
+function updateRepUI() {
+  const lv = ['Necunoscut', 'Cunoscut', 'Respectat', 'Temut', 'Legendă'];
+  Object.keys(zoneRep).forEach(k => {
+    const ll = lv[Math.floor(zoneRep[k] / 25)];
+    const map = { ferentari: 'rz1', centru: 'rz2', titan: 'rz3' };
+    const lbl = { ferentari: 'Ferentari', centru: 'Centru', titan: 'Titan' };
+    const el = document.getElementById(map[k]);
+    if (el) el.textContent = lbl[k] + ': ' + ll;
+  });
+  const total = Object.values(zoneRep).reduce((a, b) => a + b, 0);
+  const rep = Math.floor(total / 3);
+  const rl = ['Nimeni', 'Strazier', 'Contrabanddist', 'Ganger', 'Boss', 'Rege Buc.'];
+  document.getElementById('rep-bar').textContent = 'REP: ' + rl[Math.min(Math.floor(rep / 20), rl.length - 1)];
+}
+function hitNpc(npc, dmg) {
+  if (!npc.alive) return;
+  dmg *= (1 + level * .08); npc.hp -= dmg; addBlood(npc.x, npc.y);
+  combo++; comboT = 90;
+  if (npc.hp <= 0) {
+    npc.alive = false; addBlood(npc.x, npc.y);
+    addKF('💀 ELIMINAT: ' + npc.name); gainMoney(150 + combo * 20);
+    const zm = { civili: 'centru', hoti: 'centru', gasti: 'ferentari', rivali: 'titan', politie: 'centru' };
+    gainRep(10, zm[npc.faction] || 'centru');
+    checkMissionKill(npc);
+    increaseW(npc.faction === 'politie' ? 3 : .5);
+  }
+}
+function checkMissionKill(npc) {
+  if (!activeMission) return;
+  if (['gang_war', 'assault', 'rob_bank'].includes(activeMission.type)) {
+    activeMission.killCount = (activeMission.killCount || 0) + 1;
+    if (activeMission.killCount >= (activeMission.killsNeeded || 1)) completeMission();
+  }
+}
+function completeMission() {
+  if (!activeMission) return;
+  gainMoney(activeMission.reward); gainRep(25, 'centru');
+  nt('✅ MISIUNE COMPLETĂ! +$' + activeMission.reward, 3500);
+  addPart(player.x, player.y, '#FFD700', 30, 3, 5);
+  activeMission = null; missionTarget = null;
+  document.getElementById('mhud').style.display = 'none';
+  wanted = Math.max(0, wanted - .5); updateWUI();
+}
+function enterBuilding(bldg) {
+  const key = bldg.ek;
+  const intDef = INTERIORS[key];
+  if (!intDef) return;
+  currentInterior = { ...intDef, ek: key };
+  inInterior = true;
+  player.exitX = player.x; player.exitY = player.y;
+  player.x = 250; player.y = 350;
+  document.getElementById('interior-overlay').style.display = 'block';
+  document.getElementById('interior-overlay').textContent = '🏢 ' + intDef.name + ' | ENTER=Ieși';
+  nt('Ai intrat în: ' + intDef.name, 2000);
+  if (bldg.isPolitie && wanted > 0) { nt('⚠️ POLIȚIA TE-A VĂZUT! FUGI!', 2500); increaseW(1); }
+}
+function exitBuilding() {
+  if (!inInterior) return;
+  inInterior = false;
+  player.x = player.exitX || 420; player.y = player.exitY || 510;
+  currentInterior = null;
+  document.getElementById('interior-overlay').style.display = 'none';
+  nt('Ai ieșit din clădire', 1500);
+}
+function spawnPolice() {
+  if (policeCars.length >= Math.ceil(wanted) * 2 || inInterior) return;
+  const a = [0, Math.PI / 2, Math.PI, -Math.PI / 2][Math.floor(Math.random() * 4)];
+  const dist = 450 + Math.random() * 200;
+  policeCars.push({ x: Math.max(50, Math.min(MW - 50, player.x + Math.cos(a) * dist)), y: Math.max(50, Math.min(MH - 50, player.y + Math.sin(a) * dist)), ang: 0, w: 34, h: 20, hp: 80 + Math.ceil(wanted) * 20, maxHp: 160, spd: 0, shootTimer: 0, blinkP: 0 });
+}
+function updateAmmoUI() {
+  const icons = ['✊', '🏏', '🔫', '⚡', '💣'];
+  for (let i = 0; i < 5; i++) {
+    const el = document.getElementById('ws' + i);
+    const wb = document.getElementById('wb' + i);
+    if (el) { el.textContent = icons[i]; el.className = 'ws' + (i === activeWeapon ? ' on' : ''); }
+    if (wb) { wb.innerHTML = icons[i] + '<br>' + (i > 0 ? ammo[i] : 'INF'); wb.className = 'wbtn' + (i === activeWeapon ? ' on' : ''); }
+  }
+}
+
+// ── DIALOG ────────────────────────────────────────────────────────────────────
+function openDialog(npc) {
+  dialogActive = true;
+  const d = document.getElementById('dlg');
+  document.getElementById('dlg-name').textContent = npc.name + ' [' + (npc.faction || 'NPC').toUpperCase() + ']';
+  document.getElementById('dlg-text').textContent = npc.dialog.greeting;
+  const btns = document.getElementById('dlg-btns'); btns.innerHTML = '';
+  npc.dialog.missions.forEach(m => {
+    const btn = document.createElement('button'); btn.className = 'dbtn'; btn.textContent = m.text;
+    btn.onclick = () => {
+      if (m.type) {
+        activeMission = { ...m, npc, killCount: 0 };
+        missionTimer = m.time; missionTarget = { x: m.tx, y: m.ty };
+        document.getElementById('mhud').style.display = 'block';
+        nt('📋 Misiune: ' + m.text, 2500);
+        gainRep(5, npc.faction === 'hoti' ? 'centru' : npc.faction === 'gasti' ? 'ferentari' : 'titan');
+      }
+      closeDialog();
+    };
+    btns.appendChild(btn);
+  });
+  d.style.display = 'block';
+}
+function closeDialog() { dialogActive = false; document.getElementById('dlg').style.display = 'none'; }
+
+// ── SHOOT ─────────────────────────────────────────────────────────────────────
+function playerShoot() {
+  const w = WEAPONS[activeWeapon];
+  if (weaponCd > 0) return;
+  const wx = player.x + Math.cos(player.ang) * 200;
+  const wy = player.y + Math.sin(player.ang) * 200;
+  if (!w.proj) {
+    const range = w.range * (1 + level * .05);
+    const targets = inInterior && currentInterior ? interiorState[currentInterior.ek].npcs : streetNpcs;
+    let hit = false;
+    for (const n of targets) { if (n.alive && Math.hypot(n.x - player.x, n.y - player.y) < range && Math.abs(Math.atan2(n.y - player.y, n.x - player.x) - player.ang) < 1.2) { hitNpc(n, w.dmg); hit = true; break; } }
+    if (!hit && !inInterior) for (const pc of policeCars) { if (Math.hypot(pc.x - player.x, pc.y - player.y) < range) { pc.hp -= w.dmg; if (pc.hp <= 0) killPC(pc); increaseW(.5); break; } }
+    addPart(player.x + Math.cos(player.ang) * 22, player.y + Math.sin(player.ang) * 22, w.col, 6, 2, 4);
+    weaponCd = w.rate;
+  } else {
+    if (ammo[activeWeapon] <= 0) { nt('Fără muniție! Apasă RELOAD', 1500); return; }
+    const shots = activeWeapon === 3 ? 2 : 1;
+    for (let i = 0; i < shots; i++) {
+      const spread = (Math.random() - .5) * .12;
+      bullets.push({ x: player.x, y: player.y, vx: Math.cos(player.ang + spread) * w.spd, vy: Math.sin(player.ang + spread) * w.spd, isPlayer: true, dmg: w.dmg * (1 + level * .08), range: w.range, dist: 0, wep: w, isInterior: inInterior });
+    }
+    ammo[activeWeapon] = Math.max(0, ammo[activeWeapon] - 1);
+    weaponCd = w.rate;
+    addPart(player.x + Math.cos(player.ang) * 15, player.y + Math.sin(player.ang) * 15, '#FFD700', 4, 2, 5);
+    updateAmmoUI();
+  }
+}
+
+// ── UPDATES ───────────────────────────────────────────────────────────────────
+function updatePlayer() {
+  if (player.blinkT > 0) { player.blinkT--; player.visible = player.blinkT % 4 < 2; } else player.visible = true;
+  if (weaponCd > 0) weaponCd--;
+
+  // Apply joystick
+  const jdx = joystick.dx, jdy = joystick.dy;
+  const mag = Math.hypot(jdx, jdy);
+
+  if (player.inCar && player.car) {
+    const car = player.car;
+    if (mag > 0.15) {
+      // Forward/back from vertical axis
+      const fwd = -jdy; // negative Y = forward
+      if (fwd > 0.1) car.spd = Math.min(car.spd + car.acc * fwd, car.maxSpd * (1 + level * .04));
+      else if (fwd < -0.1) car.spd = Math.max(car.spd - car.acc * 1.5 * (-fwd), -car.maxSpd * .4);
+      else car.spd *= car.fri;
+      // Steering from horizontal axis
+      if (Math.abs(jdx) > 0.15 && Math.abs(car.spd) > 0.3) car.ang += jdx * 0.055 * Math.sign(car.spd);
+    } else { car.spd *= car.fri; }
+    const nx = car.x + Math.cos(car.ang) * car.spd, ny = car.y + Math.sin(car.ang) * car.spd;
+    if (!solidB(nx, ny, car.w / 2 + 2, car.h / 2 + 2) && nx > 0 && nx < MW && ny > 0 && ny < MH) { car.x = nx; car.y = ny; } else car.spd *= -.2;
+    player.x = car.x; player.y = car.y; player.ang = car.ang;
+  } else {
+    const spd = 3 * (1 + level * .04);
+    if (mag > 0.15) {
+      const nx = player.x + jdx * spd, ny = player.y + jdy * spd;
+      const ok = inInterior ? !solidI(nx, ny, 10, 10) : !solidB(nx, ny, 10, 10) && nx > 0 && nx < MW && ny > 0 && ny < MH;
+      if (ok) { player.x = nx; player.y = ny; }
+      player.ang = Math.atan2(jdy, jdx);
+    }
+  }
+
+  // Auto-aim toward nearest enemy when shooting
+  if (touchShoot) {
+    const targets = inInterior && currentInterior ? interiorState[currentInterior.ek].npcs.filter(n => n.alive) : streetNpcs.filter(n => n.alive);
+    let nearestDist = 320, nearest = null;
+    targets.forEach(n => { const d = Math.hypot(n.x - player.x, n.y - player.y); if (d < nearestDist) { nearestDist = d; nearest = n; } });
+    if (!nearest && !inInterior) policeCars.forEach(pc => { const d = Math.hypot(pc.x - player.x, pc.y - player.y); if (d < nearestDist) { nearestDist = d; nearest = pc; } });
+    if (nearest) player.ang = Math.atan2(nearest.y - player.y, nearest.x - player.x);
+    playerShoot();
+    touchShoot = false;
+  }
+
+  // Handle pickups
+  const plist = inInterior && currentInterior ? interiorState[currentInterior.ek].pickups : streetPickups;
+  plist.forEach(p => {
+    if (!p.active) return;
+    if (Math.hypot(p.x - player.x, p.y - player.y) < 22) {
+      p.active = false;
+      if (p.t === 'health') { hp = Math.min(100, hp + 40); updateBars(); nt('+40 HP 💊', 1500); }
+      else if (p.t === 'armor') { armor = Math.min(100, armor + 50); updateBars(); nt('+50 Armură 🛡', 1500); }
+      else if (p.t === 'money') { gainMoney(p.v || 200); nt('+$' + (p.v || 200) + ' 💰', 1500); }
+      else if (p.t === 'ammo') { ammo[p.wep] = Math.min(maxAmmo[p.wep], ammo[p.wep] + Math.floor(maxAmmo[p.wep] / 2)); nt('Muniție ' + WEAPONS[p.wep].name, 1000); updateAmmoUI(); }
+      else if (p.t === 'weapon') { ammo[p.wep] = maxAmmo[p.wep]; nt('Armă: ' + WEAPONS[p.wep].name + '!', 2000); updateAmmoUI(); }
+      addPart(p.x, p.y, '#FFD700', 10, 2, 3);
+      if (!inInterior) setTimeout(() => { p.active = true; }, 25000);
+    }
+  });
+
+  // Interior NPC interaction
+  if (inInterior && currentInterior) {
+    const istate = interiorState[currentInterior.ek];
+    for (const n of istate.npcs) {
+      if (n.alive && Math.hypot(n.x - player.x, n.y - player.y) < 50) {
+        if (n.heals) { hp = Math.min(100, hp + 50); armor = Math.min(100, armor + 20); updateBars(); nt('+50 HP +20 Armură de la ' + n.name, 2000); addPart(player.x, player.y, '#2ecc71', 15, 2, 4); n.hp = 0; n.alive = false; break; }
+        if (n.shop) { gainMoney(-300); ammo[2] = maxAmmo[2]; ammo[3] = maxAmmo[3]; nt('Cumpărături! -$300. Muniție refăcută.', 2000); updateAmmoUI(); n.hp = 0; n.alive = false; break; }
+      }
+    }
+    if (activeMission && (activeMission.type === 'rob_bank' || activeMission.type === 'assault')) {
+      const hostile = istate.npcs.filter(n => n.hostile);
+      if (hostile.length > 0 && hostile.every(n => !n.alive)) completeMission();
+    }
+  }
+
+  if (!inInterior && activeMission && missionTarget && Math.hypot(missionTarget.x - player.x, missionTarget.y - player.y) < 80) {
+    if (activeMission.type === 'delivery' || activeMission.type === 'taxi') completeMission();
+  }
+
+  comboT = Math.max(0, comboT - 1); if (comboT <= 0) combo = 0;
+}
+
+function updateNPCAI() {
+  if (inInterior && currentInterior) {
+    const istate = interiorState[currentInterior.ek];
+    istate.npcs.forEach(n => {
+      if (!n.alive) return;
+      const dist = Math.hypot(n.x - player.x, n.y - player.y);
+      if (n.hostile && dist < 300) {
+        const a = Math.atan2(player.y - n.y, player.x - n.x);
+        const nx2 = n.x + Math.cos(a) * 1.5, ny2 = n.y + Math.sin(a) * 1.5;
+        if (!solidI(nx2, ny2, 10, 10)) { n.x = nx2; n.y = ny2; }
+        n.shootCd = (n.shootCd || 0) - 1;
+        if (dist < 260 && n.shootCd <= 0) { bullets.push({ x: n.x, y: n.y, vx: Math.cos(a + (Math.random() - .5) * .2) * 8, vy: Math.sin(a + (Math.random() - .5) * .2) * 8, isPlayer: false, dmg: 10, range: 260, dist: 0, wep: WEAPONS[2], isInterior: true }); n.shootCd = 50; }
+      }
+    });
+    return;
+  }
+  streetNpcs.forEach(n => {
+    if (!n.alive) return;
+    const dist = Math.hypot(n.x - player.x, n.y - player.y);
+    const hostile = n.faction === 'rivali' || (activeMission && activeMission.type === 'gang_war' && activeMission.npc && n.faction !== activeMission.npc.faction && n.faction !== 'civili');
+    if (hostile && dist < 300) {
+      const a = Math.atan2(player.y - n.y, player.x - n.x);
+      const nx2 = n.x + Math.cos(a) * 1.7, ny2 = n.y + Math.sin(a) * 1.7;
+      if (!solidB(nx2, ny2, 10, 10)) { n.x = nx2; n.y = ny2; }
+      n.sCd = (n.sCd || 0) - 1;
+      if (dist < 280 && n.sCd <= 0) { bullets.push({ x: n.x, y: n.y, vx: Math.cos(a + (Math.random() - .5) * .18) * 8, vy: Math.sin(a + (Math.random() - .5) * .18) * 8, isPlayer: false, dmg: 8, range: 270, dist: 0, wep: WEAPONS[2], isInterior: false }); n.sCd = 55; }
+    } else if (dist > 60) {
+      n.walkP += .015 * n.pd;
+      const nx2 = n.x + Math.cos(n.walkP) * 1.1, ny2 = n.y + Math.sin(n.walkP * .7) * .8;
+      if (!solidB(nx2, ny2, 10, 10) && nx2 > 0 && nx2 < MW && ny2 > 0 && ny2 < MH) { n.x = nx2; n.y = ny2; } else n.pd *= -1;
+    }
+  });
+}
+
+function updatePolice() {
+  policeTimer++; if (policeTimer > 160 && wanted >= 1 && !inInterior) { spawnPolice(); policeTimer = 0; }
+  wantedDecay++; if (wantedDecay > 350 && wanted > 0) { wanted = Math.max(0, wanted - .1); updateWUI(); wantedDecay = 0; }
+  if (wanted < .5 && policeCars.length > 0) policeCars.splice(0, 1);
+  if (inInterior) return;
+  policeCars.forEach(pc => {
+    const dist = Math.hypot(pc.x - player.x, pc.y - player.y);
+    const ta = Math.atan2(player.y - pc.y, player.x - pc.x);
+    let da = ta - pc.ang; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;
+    pc.ang += Math.sign(da) * Math.min(Math.abs(da), .08);
+    pc.spd = Math.min(4.5 + wanted * .3, dist * .05 + 1);
+    const nx = pc.x + Math.cos(pc.ang) * pc.spd, ny = pc.y + Math.sin(pc.ang) * pc.spd;
+    if (!solidB(nx, ny, pc.w / 2 + 2, pc.h / 2 + 2)) { pc.x = nx; pc.y = ny; } else pc.spd *= -.2;
+    pc.blinkP = (pc.blinkP || 0) + 1; pc.shootTimer = (pc.shootTimer || 0) + 1;
+    if (dist < 300 && pc.shootTimer > 40) { bullets.push({ x: pc.x, y: pc.y, vx: Math.cos(pc.ang + (Math.random() - .5) * .2) * (8 + wanted), vy: Math.sin(pc.ang + (Math.random() - .5) * .2) * (8 + wanted), isPlayer: false, dmg: 8 + wanted * 2, range: 280, dist: 0, wep: WEAPONS[2], isInterior: false }); pc.shootTimer = 0; }
+    if (dist < 25) { takeDmg(2); increaseW(.2); }
+  });
+}
+
+function updateBullets() {
+  bullets = bullets.filter(b => {
+    b.x += b.vx; b.y += b.vy; b.dist += Math.hypot(b.vx, b.vy);
+    if (b.dist > b.range) return false;
+    if (b.isInterior !== inInterior) return true;
+    if (inInterior && currentInterior && solidI(b.x, b.y, 3, 3)) { addPart(b.x, b.y, '#aaa', 2, 1, 2); return false; }
+    if (!inInterior && solidB(b.x, b.y, 3, 3)) { addPart(b.x, b.y, '#aaa', 3, 1.5, 2); return false; }
+    if (b.isPlayer) {
+      const targets = inInterior && currentInterior ? interiorState[currentInterior.ek].npcs : streetNpcs;
+      for (const n of targets) { if (n.alive && Math.hypot(n.x - b.x, n.y - b.y) < 14) { hitNpc(n, b.dmg); if (b.wep && b.wep.expl) addExpl(b.x, b.y); return false; } }
+      if (!inInterior) for (const pc of policeCars) { if (Math.hypot(pc.x - b.x, pc.y - b.y) < 18) { pc.hp -= b.dmg; if (pc.hp <= 0) killPC(pc); increaseW(.3); if (b.wep && b.wep.expl) addExpl(b.x, b.y); return false; } }
+      if (!inInterior) for (const c of trafficCars) { if (c.alive && Math.hypot(c.x - b.x, c.y - b.y) < 18) { c.hp -= b.dmg; if (c.hp <= 0) { addExpl(c.x, c.y, 60); c.alive = false; } return false; } }
+    } else {
+      if (Math.hypot(player.x - b.x, player.y - b.y) < 12) { takeDmg(b.dmg); addPart(b.x, b.y, '#e74c3c', 5, 2, 3); return false; }
+    }
+    return true;
+  });
+}
+
+function updateTraffic() { trafficCars.forEach(c => { if (!c.alive) return; c.x += c.vx; c.y += c.vy; if (c.x < 0 || c.x > MW) c.vx *= -1; if (c.y < 0 || c.y > MH) c.vy *= -1; }); }
+function updateMissionTimer() {
+  if (!activeMission || !missionTimer) return;
+  missionTimer -= 1 / 60;
+  const mh = document.getElementById('mhud');
+  if (mh.style.display !== 'none') mh.innerHTML = '<strong>' + activeMission.text + '</strong><br><span style="color:' + (missionTimer < 15 ? '#e74c3c' : '#FFD700') + '">' + Math.ceil(missionTimer) + 's</span>';
+  if (missionTimer <= 0) { nt('❌ MISIUNE EȘUATĂ!', 3000); activeMission = null; missionTarget = null; mh.style.display = 'none'; }
+}
+function updateParticles() { particles = particles.filter(p => { p.x += p.vx; p.y += p.vy; p.vx *= .9; p.vy *= .9; p.life *= .87; return p.life > .05; }); }
+function updateCamera() {
+  if (inInterior && currentInterior) {
+    const iw = currentInterior.w, ih = currentInterior.h;
+    cam.x = Math.max(0, Math.min(iw - W(), player.x - W() / 2));
+    cam.y = Math.max(0, Math.min(ih - H(), player.y - H() / 2));
+  } else {
+    cam.x = Math.max(0, Math.min(MW - W(), player.x - W() / 2));
+    cam.y = Math.max(0, Math.min(MH - H(), player.y - H() / 2));
+  }
+}
+
+// ── DRAW ──────────────────────────────────────────────────────────────────────
+function drawTerrain() {
+  const w = W(), h = H();
+  if (inInterior && currentInterior) {
+    const int = currentInterior;
+    cx.fillStyle = int.color; cx.fillRect(0, 0, w, h);
+    cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.fillRect(0, 0, int.w, 18); cx.fillRect(0, int.h - 18, int.w, 18); cx.fillRect(0, 0, 18, int.h); cx.fillRect(int.w - 18, 0, 18, int.h);
+    int.furniture.forEach(f => { cx.fillStyle = f.c; cx.fillRect(f.x - cam.x, f.y - cam.y, f.w, f.h); cx.fillStyle = 'rgba(255,255,255,0.15)'; cx.font = '7px monospace'; cx.fillText(f.n, f.x + 3 - cam.x, f.y + f.h - 4 - cam.y); });
+    cx.fillStyle = 'rgba(0,200,100,0.6)'; cx.fillRect(int.w / 2 - 22 - cam.x, int.h - 16 - cam.y, 44, 12);
+    cx.fillStyle = '#000'; cx.font = '7px monospace'; cx.textAlign = 'center'; cx.fillText('[ IEȘIRE ]', int.w / 2 - cam.x, int.h - 6 - cam.y); cx.textAlign = 'left';
+    return;
+  }
+  cx.fillStyle = '#3a7d2c'; cx.fillRect(0, 0, w, h);
+  roads.forEach(r => {
+    cx.fillStyle = '#505050'; cx.fillRect(r.x - cam.x, r.y - cam.y, r.w, r.h);
+    cx.strokeStyle = 'rgba(255,215,0,0.3)'; cx.setLineDash([22, 15]); cx.lineWidth = 1.5; cx.beginPath();
+    if (r.w > r.h) { const cy = r.y + r.h / 2; cx.moveTo(r.x - cam.x, cy - cam.y); cx.lineTo(r.x + r.w - cam.x, cy - cam.y); }
+    else { const cxx = r.x + r.w / 2; cx.moveTo(cxx - cam.x, r.y - cam.y); cx.lineTo(cxx - cam.x, r.y + r.h - cam.y); }
+    cx.stroke(); cx.setLineDash([]);
+  });
+  bldgs.forEach(b => {
+    cx.fillStyle = b.c; cx.fillRect(b.x - cam.x, b.y - cam.y, b.w, b.h);
+    cx.fillStyle = 'rgba(0,0,0,0.3)'; cx.fillRect(b.x + 3 - cam.x, b.y + 3 - cam.y, b.w - 6, b.h - 6);
+    for (let row = 0; row < Math.floor((b.h - 8) / 20); row++) for (let col = 0; col < Math.floor((b.w - 8) / 14); col++) { cx.fillStyle = Math.random() > .65 ? '#FFD700' : 'rgba(255,240,150,0.18)'; cx.fillRect(b.x + 6 + col * 14 - cam.x, b.y + 6 + row * 20 - cam.y, 6, 9); }
+    if (b.isPolitie) { cx.strokeStyle = '#2244ff'; cx.lineWidth = 3; cx.strokeRect(b.x - cam.x, b.y - cam.y, b.w, b.h); }
+    cx.fillStyle = 'rgba(255,255,255,0.14)'; cx.font = 'bold 8px monospace'; cx.fillText(b.n, b.x + 3 - cam.x, b.y + b.h - 4 - cam.y);
+    const nearDoor = !player.inCar && Math.hypot((b.x + b.w / 2) - player.x, (b.y + b.h) - player.y) < 72;
+    if (nearDoor) {
+      cx.fillStyle = '#00ff88'; cx.fillRect(b.x + b.w / 2 - 18 - cam.x, b.y + b.h - 12 - cam.y, 36, 10);
+      cx.fillStyle = '#000'; cx.font = '7px monospace'; cx.textAlign = 'center'; cx.fillText('ENTER', b.x + b.w / 2 - cam.x, b.y + b.h - 4 - cam.y); cx.textAlign = 'left';
+    }
+  });
+}
+function drawPickups() {
+  const plist = inInterior && currentInterior ? interiorState[currentInterior.ek].pickups : streetPickups;
+  plist.forEach(p => {
+    if (!p.active) return;
+    const sx = p.x - cam.x, sy = p.y - cam.y;
+    if (sx < -20 || sx > W() + 20 || sy < -20 || sy > H() + 20) return;
+    const pulse = .75 + .25 * Math.sin(gameTime * .09);
+    cx.save(); cx.globalAlpha = pulse;
+    const cols = { health: '#e74c3c', armor: '#3498db', money: '#FFD700', ammo: '#f39c12', weapon: '#9b59b6' };
+    cx.fillStyle = cols[p.t] || '#aaa'; cx.strokeStyle = 'rgba(255,255,255,0.4)'; cx.lineWidth = 1.5;
+    cx.beginPath(); cx.arc(sx, sy, 10, 0, Math.PI * 2); cx.fill(); cx.stroke();
+    cx.fillStyle = '#fff'; cx.font = 'bold 9px monospace'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    cx.fillText({ health: 'H', armor: 'A', money: '$', ammo: '.', weapon: 'W' }[p.t] || '?', sx, sy);
+    cx.restore(); cx.textAlign = 'left'; cx.textBaseline = 'alphabetic';
+  });
+}
+function drawNPCs() {
+  const targets = inInterior && currentInterior ? interiorState[currentInterior.ek].npcs : streetNpcs;
+  targets.forEach(n => {
+    const sx = n.x - cam.x, sy = n.y - cam.y;
+    if (sx < -30 || sx > W() + 30 || sy < -30 || sy > H() + 30) return;
+    if (!n.alive) { cx.fillStyle = '#7b241c'; cx.save(); cx.translate(sx, sy); cx.rotate(Math.PI / 2); cx.fillRect(-7, -3, 14, 6); cx.restore(); return; }
+    cx.fillStyle = n.color || '#e67e22'; cx.beginPath(); cx.arc(sx, sy - 7, 6, 0, Math.PI * 2); cx.fill();
+    cx.fillStyle = n.hostile ? '#334488' : '#996633'; cx.fillRect(sx - 5, sy - 2, 10, 11);
+    cx.fillStyle = 'rgba(0,0,0,0.7)'; cx.fillRect(sx - 14, sy - 20, 28, 4);
+    cx.fillStyle = n.hp / n.maxHp > 0.5 ? '#2ecc71' : n.hp / n.maxHp > 0.25 ? '#f39c12' : '#e74c3c';
+    cx.fillRect(sx - 14, sy - 20, 28 * (n.hp / n.maxHp), 4);
+    cx.fillStyle = 'rgba(255,255,255,0.7)'; cx.font = '7px monospace'; cx.textAlign = 'center'; cx.fillText(n.name, sx, sy - 22); cx.textAlign = 'left';
+    if (!n.hostile && Math.hypot(n.x - player.x, n.y - player.y) < 60) { cx.fillStyle = 'rgba(255,215,0,0.9)'; cx.font = '8px monospace'; cx.textAlign = 'center'; cx.fillText('[F]', sx, sy + 22); cx.textAlign = 'left'; }
+  });
+}
+function drawCar(car, isp, isPol) {
+  const sx = car.x - cam.x, sy = car.y - cam.y;
+  if (sx < -60 || sx > W() + 60 || sy < -60 || sy > H() + 60) return;
+  cx.save(); cx.translate(sx, sy); cx.rotate(car.ang || 0);
+  cx.fillStyle = isPol ? '#000066' : car.c; cx.strokeStyle = 'rgba(0,0,0,0.4)'; cx.lineWidth = 1;
+  cx.beginPath(); cx.roundRect(-car.w / 2, -car.h / 2, car.w, car.h, 3); cx.fill(); cx.stroke();
+  cx.fillStyle = 'rgba(180,220,255,0.5)'; cx.fillRect(-car.w / 2 + 3, -car.h / 2 + 2, car.w / 3, car.h - 4); cx.fillRect(car.w / 6, -car.h / 2 + 2, car.w / 4, car.h - 4);
+  cx.fillStyle = '#222'; cx.fillRect(-car.w / 2 - 2, -car.h / 2 + 2, 4, 4); cx.fillRect(-car.w / 2 - 2, car.h / 2 - 6, 4, 4); cx.fillRect(car.w / 2 - 2, -car.h / 2 + 2, 4, 4); cx.fillRect(car.w / 2 - 2, car.h / 2 - 6, 4, 4);
+  if (isPol) { cx.fillStyle = ((car.blinkP || 0) % 18 < 9) ? '#ff0000' : '#0000ff'; cx.fillRect(-7, -car.h / 2 - 5, 14, 4); }
+  if (isp) { cx.strokeStyle = '#00ff88'; cx.lineWidth = 2; cx.beginPath(); cx.ellipse(0, 0, car.w / 2 + 4, car.h / 2 + 4, 0, 0, Math.PI * 2); cx.stroke(); }
+  cx.restore();
+}
+function drawPlayer() {
+  if (player.inCar || !player.visible) return;
+  const sx = player.x - cam.x, sy = player.y - cam.y;
+  cx.save(); cx.translate(sx, sy); cx.rotate(player.ang);
+  cx.fillStyle = '#ffcc88'; cx.beginPath(); cx.arc(0, -7, 6, 0, Math.PI * 2); cx.fill();
+  cx.fillStyle = '#cc2200'; cx.fillRect(-5, -2, 10, 11);
+  cx.fillStyle = '#ffaa77'; cx.fillRect(-8, -2, 4, 7); cx.fillRect(4, -2, 4, 7);
+  if (activeWeapon > 0) { cx.fillStyle = WEAPONS[activeWeapon].col; cx.fillRect(6, -2, 14, 3); }
+  cx.restore();
+  // Aim line
+  cx.save(); cx.strokeStyle = 'rgba(255,255,0,0.25)'; cx.lineWidth = 1; cx.setLineDash([4, 6]);
+  cx.beginPath(); cx.moveTo(sx + Math.cos(player.ang) * 20, sy + Math.sin(player.ang) * 20);
+  cx.lineTo(sx + Math.cos(player.ang) * 70, sy + Math.sin(player.ang) * 70);
+  cx.stroke(); cx.setLineDash([]); cx.restore();
+}
+function drawCrosshair() {
+  const sx = player.x - cam.x + Math.cos(player.ang) * 80;
+  const sy = player.y - cam.y + Math.sin(player.ang) * 80;
+  cx.save();
+  cx.strokeStyle = crosshairTarget ? '#ff3333' : 'rgba(255,255,255,0.7)';
+  cx.lineWidth = crosshairTarget ? 2 : 1.5;
+  cx.beginPath(); cx.arc(sx, sy, crosshairTarget ? 10 : 7, 0, Math.PI * 2); cx.stroke();
+  cx.beginPath(); cx.moveTo(sx - 14, sy); cx.lineTo(sx - 8, sy); cx.moveTo(sx + 8, sy); cx.lineTo(sx + 14, sy); cx.moveTo(sx, sy - 14); cx.lineTo(sx, sy - 8); cx.moveTo(sx, sy + 8); cx.lineTo(sx, sy + 14); cx.stroke();
+  if (crosshairTarget) { cx.strokeStyle = 'rgba(255,50,50,0.35)'; cx.lineWidth = 1; cx.beginPath(); cx.arc(sx, sy, 18, 0, Math.PI * 2); cx.stroke(); }
+  cx.restore();
+}
+function drawBullets() { bullets.forEach(b => { if (b.isInterior !== inInterior) return; const sx = b.x - cam.x, sy = b.y - cam.y; cx.fillStyle = b.isPlayer ? '#FFD700' : '#ff4444'; cx.beginPath(); cx.arc(sx, sy, b.wep && b.wep.expl ? 5 : 2.5, 0, Math.PI * 2); cx.fill(); }); }
+function drawParticles() { particles.forEach(p => { const sx = p.x - cam.x, sy = p.y - cam.y; cx.save(); cx.globalAlpha = p.life; cx.fillStyle = p.col; cx.beginPath(); cx.arc(sx, sy, p.sz, 0, Math.PI * 2); cx.fill(); cx.restore(); }); }
+function drawExplosions() {
+  explosions.forEach(e => { const sx = e.x - cam.x, sy = e.y - cam.y; cx.save(); cx.globalAlpha = e.life * .6; cx.strokeStyle = '#f39c12'; cx.lineWidth = 3; cx.beginPath(); cx.arc(sx, sy, e.r * (1 - e.life), 0, Math.PI * 2); cx.stroke(); cx.fillStyle = 'rgba(230,126,34,.15)'; cx.beginPath(); cx.arc(sx, sy, e.r * (1 - e.life), 0, Math.PI * 2); cx.fill(); cx.restore(); });
+  explosions = explosions.filter(e => { e.life -= .05; return e.life > 0; });
+}
+function drawMissionTarget() {
+  if (!missionTarget || inInterior) return;
+  const sx = missionTarget.x - cam.x, sy = missionTarget.y - cam.y;
+  // Arrow if off-screen
+  if (sx < 0 || sx > W() || sy < 0 || sy > H()) {
+    const a = Math.atan2(missionTarget.y - player.y, missionTarget.x - player.x);
+    const ax = W() / 2 + Math.cos(a) * (W() / 2 - 22), ay = H() / 2 + Math.sin(a) * (H() / 2 - 30);
+    cx.save(); cx.translate(ax, ay); cx.rotate(a); cx.fillStyle = '#FFD700'; cx.beginPath(); cx.moveTo(10, 0); cx.lineTo(-8, 6); cx.lineTo(-8, -6); cx.closePath(); cx.fill(); cx.restore();
+    return;
+  }
+  const p = .6 + .4 * Math.sin(gameTime * .1);
+  cx.save(); cx.globalAlpha = p; cx.strokeStyle = '#FFD700'; cx.lineWidth = 3;
+  cx.beginPath(); cx.arc(sx, sy, 36, 0, Math.PI * 2); cx.stroke();
+  cx.fillStyle = 'rgba(255,215,0,0.12)'; cx.beginPath(); cx.arc(sx, sy, 36, 0, Math.PI * 2); cx.fill();
+  cx.fillStyle = '#FFD700'; cx.font = 'bold 9px monospace'; cx.textAlign = 'center'; cx.fillText('DEST.', sx, sy + 50);
+  cx.restore(); cx.textAlign = 'left';
+}
+function drawMinimap() {
+  mx.clearRect(0, 0, 72, 72); mx.fillStyle = '#2d5a27'; mx.fillRect(0, 0, 72, 72);
+  if (inInterior) { mx.fillStyle = '#6a5a4a'; mx.fillRect(0, 0, 72, 72); mx.fillStyle = '#fff'; mx.font = '7px monospace'; mx.textAlign = 'center'; mx.fillText('INT.', 36, 36); mx.textAlign = 'left'; mx.fillStyle = '#ff0'; mx.beginPath(); mx.arc(player.x / (currentInterior.w / 72), player.y / (currentInterior.h / 72), 4, 0, Math.PI * 2); mx.fill(); return; }
+  const sx = 72 / MW, sy = 72 / MH;
+  roads.forEach(r => { mx.fillStyle = '#555'; mx.fillRect(r.x * sx, r.y * sy, r.w * sx, r.h * sy); });
+  bldgs.forEach(b => { if (!b.iswater && !b.ispark) { mx.fillStyle = 'rgba(100,80,60,.7)'; mx.fillRect(b.x * sx, b.y * sy, b.w * sx, b.h * sy); } });
+  streetNpcs.forEach(n => { if (n.alive) { mx.fillStyle = n.color || '#e67e22'; mx.fillRect(n.x * sx - 1.5, n.y * sy - 1.5, 3, 3); } });
+  policeCars.forEach(pc => { mx.fillStyle = '#3333ff'; mx.fillRect(pc.x * sx - 2, pc.y * sy - 2, 4, 4); });
+  if (missionTarget) { mx.fillStyle = '#FFD700'; mx.beginPath(); mx.arc(missionTarget.x * sx, missionTarget.y * sy, 4, 0, Math.PI * 2); mx.fill(); }
+  mx.fillStyle = '#fff'; mx.beginPath(); mx.arc(player.x * sx, player.y * sy, 3.5, 0, Math.PI * 2); mx.fill();
+}
+function drawCombo() {
+  if (combo > 2 && comboT > 0) {
+    cx.save(); cx.globalAlpha = comboT / 90;
+    cx.fillStyle = '#FFD700'; cx.font = 'bold ' + (12 + combo * 1.2) + 'px monospace';
+    cx.textAlign = 'center'; cx.fillText('COMBO x' + combo + '!', W() / 2, H() / 2 - 55);
+    cx.restore(); cx.textAlign = 'left';
+  }
+}
+function updateCrosshair() {
+  crosshairTarget = null;
+  const targets = inInterior && currentInterior ? interiorState[currentInterior.ek].npcs.filter(n => n.alive) : streetNpcs.filter(n => n.alive);
+  const tx = player.x + Math.cos(player.ang) * 80, ty = player.y + Math.sin(player.ang) * 80;
+  let best = 60;
+  targets.forEach(n => { const d = Math.hypot(n.x - tx, n.y - ty); if (d < best) { best = d; crosshairTarget = n; } });
+  if (!crosshairTarget && !inInterior) policeCars.forEach(pc => { const d = Math.hypot(pc.x - tx, pc.y - ty); if (d < best) { best = d; crosshairTarget = pc; } });
+}
+
+// ── TOUCH INPUT ───────────────────────────────────────────────────────────────
+const joystickBase = document.getElementById('joystick-base');
+const joystickKnob = document.getElementById('joystick-knob');
+const jbRect = () => joystickBase.getBoundingClientRect();
+
+document.addEventListener('touchstart', e => {
+  e.preventDefault();
+  Array.from(e.changedTouches).forEach(t => {
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    const jz = document.getElementById('joystick-zone');
+    const jzR = jz.getBoundingClientRect();
+    if (t.clientX >= jzR.left && t.clientX <= jzR.right && t.clientY >= jzR.top && t.clientY <= jzR.bottom) {
+      joystick.active = true; joystick.id = t.identifier;
+      joystick.cx = t.clientX; joystick.cy = t.clientY;
+    }
+  });
+}, { passive: false });
+
+document.addEventListener('touchmove', e => {
+  e.preventDefault();
+  Array.from(e.changedTouches).forEach(t => {
+    if (t.identifier === joystick.id) {
+      const dx = t.clientX - joystick.cx, dy = t.clientY - joystick.cy;
+      const mag = Math.hypot(dx, dy);
+      const maxR = 42;
+      const nx = mag > maxR ? (dx / mag) * maxR : dx;
+      const ny = mag > maxR ? (dy / mag) * maxR : dy;
+      joystick.dx = nx / maxR; joystick.dy = ny / maxR;
+      joystickKnob.style.left = (33 + nx) + 'px'; joystickKnob.style.top = (33 + ny) + 'px';
+    }
+  });
+}, { passive: false });
+
+document.addEventListener('touchend', e => {
+  Array.from(e.changedTouches).forEach(t => {
+    if (t.identifier === joystick.id) {
+      joystick.active = false; joystick.id = null; joystick.dx = 0; joystick.dy = 0;
+      joystickKnob.style.left = '33px'; joystickKnob.style.top = '33px';
+    }
+  });
+});
+
+// Button bindings
+function setupBtn(id, ondown, onup) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('touchstart', e => { e.stopPropagation(); e.preventDefault(); if (ondown) ondown(); }, { passive: false });
+  el.addEventListener('touchend', e => { e.stopPropagation(); e.preventDefault(); if (onup) onup(); }, { passive: false });
+  el.addEventListener('click', e => { e.stopPropagation(); if (ondown) ondown(); });
+}
+
+// Continuous shoot: hold
+let shootInterval = null;
+setupBtn('btn-shoot',
+  () => { touchShoot = true; shootInterval = setInterval(() => { touchShoot = true; }, 120); },
+  () => { clearInterval(shootInterval); shootInterval = null; }
+);
+
+setupBtn('btn-enter', () => {
+  if (inInterior) { exitBuilding(); return; }
+  if (player.inCar && player.car) {
+    if (Math.abs(player.car.spd) < 1.2) { player.inCar = false; player.car.inUse = false; player.x = player.car.x + Math.cos(player.car.ang + Math.PI / 2) * 26; player.y = player.car.y + Math.sin(player.car.ang + Math.PI / 2) * 26; player.car = null; nt('Ai ieșit din mașină'); }
+    return;
+  }
+  for (const car of playerCars) { if (!car.inUse && Math.hypot(car.x - player.x, car.y - player.y) < 55) { player.inCar = true; player.car = car; car.inUse = true; nt('Ai intrat în ' + car.n + '!'); return; } }
+  for (const b of bldgs) { if (Math.hypot((b.x + b.w / 2) - player.x, (b.y + b.h) - player.y) < 72 && b.ek) { enterBuilding(b); return; } }
+  nt('Apropie-te de o mașină sau clădire', 1800);
+});
+
+setupBtn('btn-action', () => {
+  if (dialogActive) { closeDialog(); return; }
+  for (const n of streetNpcs) { if (n.alive && Math.hypot(n.x - player.x, n.y - player.y) < 60) { openDialog(n); return; } }
+  if (activeMission && missionTarget && Math.hypot(missionTarget.x - player.x, missionTarget.y - player.y) < 80) { completeMission(); return; }
+  nt('Apropie-te de un NPC (⭐ galben)', 1500);
+});
+
+setupBtn('btn-car', () => {
+  if (player.inCar) {
+    if (Math.abs(player.car.spd) < 1.2) { player.inCar = false; player.car.inUse = false; player.x = player.car.x + Math.cos(player.car.ang + Math.PI / 2) * 26; player.y = player.car.y + Math.sin(player.car.ang + Math.PI / 2) * 26; player.car = null; nt('Ai ieșit din mașină'); }
+  } else {
+    for (const car of playerCars) { if (!car.inUse && Math.hypot(car.x - player.x, car.y - player.y) < 55) { player.inCar = true; player.car = car; car.inUse = true; nt('Ai intrat în ' + car.n + '!'); return; } }
+    nt('Nicio mașină aproape', 1500);
+  }
+});
+
+setupBtn('btn-dodge', () => { addPart(player.x, player.y, '#88ccff', 12, 2, 5); nt('Evaziune!', 800); });
+
+// Weapon buttons
+for (let i = 0; i < 5; i++) {
+  const wb = document.getElementById('wb' + i);
+  if (wb) wb.addEventListener('click', e => { e.stopPropagation(); if (ammo[i] > 0 || i === 0) { activeWeapon = i; updateAmmoUI(); } else nt('Fără muniție!', 1000); });
+}
+
+// ── MAIN LOOP ─────────────────────────────────────────────────────────────────
+let lastT = 0;
+function loop(ts) {
+  const dt = ts - lastT; lastT = ts; gameTime++;
+  cx.clearRect(0, 0, W(), H());
+  updatePlayer(); updateNPCAI(); updatePolice(); updateTraffic();
+  updateBullets(); updateMissionTimer(); updateParticles(); updateCamera(); updateCrosshair();
+  killfeed = killfeed.filter(k => { k.t--; return k.t > 0; });
+  if (killfeed.length) document.getElementById('kf').innerHTML = killfeed.slice(-3).map(k => `<div style="opacity:${k.t / 180}">${k.msg}</div>`).join('');
+  drawTerrain(); drawPickups(); drawMissionTarget();
+  if (!inInterior) { trafficCars.filter(c => c.alive).forEach(c => drawCar(c, false, false)); policeCars.forEach(pc => drawCar(pc, false, true)); playerCars.forEach(c => drawCar(c, c === player.car, false)); }
+  drawNPCs(); drawBullets(); drawExplosions(); drawParticles(); drawPlayer(); drawCrosshair(); drawCombo(); drawMinimap();
+  cx.fillStyle = 'rgba(255,255,255,0.35)'; cx.font = '8px monospace';
+  cx.fillText('Nv.' + level + ' XP:' + Math.floor(xp) + '/' + level * 200 + (inInterior ? '  [INT]' : ''), 8, H() - 4);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
